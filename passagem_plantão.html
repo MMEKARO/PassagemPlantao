@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passagem de Plantão</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Código do Firebase -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCLh1pxrZODPvitJ064t5vhsLAlUUo4vqI",
+        authDomain: "datagraacc.firebaseapp.com",
+        projectId: "datagraacc",
+        storageBucket: "datagraacc.appspot.com",
+        messagingSenderId: "602114884297",
+        appId: "1:602114884297:web:cdb93a7a036da87af8c318"
+      };
+
+      const app = initializeApp(firebaseConfig);
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Passagem de Plantão de Enfermagem</h1>
+        
+        <button id="indicators-button" onclick="showIndicators()">Indicadores da Unidade</button>
+        
+        <div class="beds">
+            <div class="bed" id="bed-621">Leito 621: <span class="patient-name">Vazio</span></div>
+            <div class="bed" id="bed-622">Leito 622: <span class="patient-name">Vazio</span></div>
+            <div class="bed" id="bed-623">Leito 623: <span class="patient-name">Vazio</span></div>
+            <div class="bed" id="bed-624">Leito 624: <span class="patient-name">Vazio</span></div>
+            <div class="bed" id="bed-625">Leito 625: <span class="patient-name">Vazio</span></div>
+            <div class="bed" id="bed-626">Leito 626: <span class="patient-name">Vazio</span></div>
+            <div class="bed" id="bed-627">Leito 627 (Isolamento): <span class="patient-name">Vazio</span></div>
+            <div class="bed" id="bed-628">Leito 628 (Isolamento): <span class="patient-name">Vazio</span></div>
+            <div class="bed" id="bed-629">Leito 629 (Isolamento): <span class="patient-name">Vazio</span></div>
+            <div class="pending" id="pending">Pendências do Setor</div>
+        </div>
+
+        <div id="edit-form" style="display:none;">
+            <h2>Editar Leito</h2>
+            <form>
+                <label for="patient-name">Nome do Paciente:</label>
+                <input type="text" id="patient-name" name="patient-name"><br>
+                
+                <label for="dob">Data de Nascimento:</label>
+                <input type="date" id="dob" name="dob" onblur="calculateAge()"><br>
+                
+                <label for="age">Idade:</label>
+                <input type="number" id="age" name="age" readonly><br>
+
+                <label for="attendement">Atendimento:</label>
+                <input type="text" id="attendement" name="attendement"><br>
+
+                <label for="medical-record">Prontuário:</label>
+                <input type="text" id="medical-record" name="medical-record"><br>
+
+                <label for="convenio-type">Tipo do Convênio:</label>
+                <select id="convenio-type" name="convenio-type">
+                    <option value="apartamento">Apartamento</option>
+                    <option value="enfermaria">Enfermaria</option>
+                </select><br>
+
+                <label for="allergy">Alergia:</label>
+                <input type="text" id="allergy" name="allergy"><br>
+
+                <label for="isolation">Isolamento:</label>
+                <select id="isolation" name="isolation">
+                    <option value="Contato">Contato</option>
+                    <option value="Gotículas">Gotículas</option>
+                    <option value="Aerossóis">Aerossóis</option>
+                    <option value="Ambiente Protetor">Ambiente Protetor</option>
+                    <option value="Não">Não</option>
+                </select><br>
+
+                <label for="patient-profile">Perfil do Paciente:</label>
+                <select id="patient-profile" name="patient-profile">
+                    <option value="clínico">Clínico</option>
+                    <option value="cirúrgico">Cirúrgico</option>
+                    <option value="TMO">TMO</option>
+                    <option value="ambulatorial">Ambulatorial</option>
+                </select><br>
+
+                <label for="weight">Peso:</label>
+                <input type="number" id="weight" name="weight"><br>
+
+                <label for="height">Altura:</label>
+                <input type="number" id="height" name="height"><br>
+
+                <label for="abdominal-circumference">Circunferência Abdominal:</label>
+                <input type="number" id="abdominal-circumference" name="abdominal-circumference"><br>
+
+                <label for="admission-date">Data de Internação:</label>
+                <input type="datetime-local" id="admission-date" name="admission-date"><br>
+
+                <label for="nas">NAS:</label>
+                <input type="text" id="nas" name="nas"><br>
+
+                <label for="prism">PRISM:</label>
+                <input type="text" id="prism" name="prism"><br>
+
+                <label for="neutropenia">Neutropênico:</label>
+                <select id="neutropenia" name="neutropenia">
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                </select><br>
+
+<h1>Exames Laboratoriais</h1>
+<label for="lab-exams">Exames Lab:</label><br>
+
+<button type="button" id="hemogramaBtn">Hemograma</button>
+<div id="hemogramaInputs" class="hidden">
+    <label>HB: <input type="number" name="hb" placeholder="Valores de HB"></label><br>
+    <label>Plaquetas: <input type="number" name="plaquetas" placeholder="Valores de plaquetas"></label><br>
+    <label>Leucócitos: <input type="number" name="leucocitos" placeholder="Valores de leucócitos"></label><br>
+    <label>Neutrófilos: <input type="number" name="neutrofilos" placeholder="Valores de neutrófilos"></label><br>
+    <label>Linfoncitos: <input type="number" name="linfocitos" placeholder="Valores de linfócitos"></label><br>
+</div>
+
+<button type="button" id="coagulogramaBtn">Coagulograma</button>
+<div id="coagulogramaInputs" class="hidden">
+    <label>INR: <input type="number" name="inr" placeholder="Valores de INR"></label><br>
+    <label>TTPA: <input type="number" name="ttpa" placeholder="Valores de TTPA"></label><br>
+</div>
+
+<button type="button" id="outrosBtn">Outros</button>
+<div id="outrosInputs" class="hidden">
+    <label>Outros Exames: <input type="text" name="outros" placeholder="Escreva outros exames"></label>
+    <button type="button" id="addOtherBtn">Adicionar</button>
+    <div id="outrosList"></div>
+</div>
+
+<button type="button" id="hemoculturaBtn">Hemocultura</button>
+<div id="hemoculturaInputs" class="hidden">
+    <label>Informação: <input type="text" name="hemocultura" placeholder="Adicionar informação"></label>
+    <label>Data: <input type="date" name="hemoculturaData"></label>
+    <button type="button" id="addHemoculturaBtn">Adicionar Hemocultura</button>
+    <div id="hemoculturaList"></div>
+</div>
+
+<script>
+    document.getElementById('hemogramaBtn').onclick = function() {
+        toggleVisibility('hemogramaInputs');
+    };
+
+    document.getElementById('coagulogramaBtn').onclick = function() {
+        toggleVisibility('coagulogramaInputs');
+    };
+
+    document.getElementById('outrosBtn').onclick = function() {
+        toggleVisibility('outrosInputs');
+    };
+
+    document.getElementById('hemoculturaBtn').onclick = function() {
+        toggleVisibility('hemoculturaInputs');
+    };
+
+    document.getElementById('addOtherBtn').onclick = function() {
+        const outrosList = document.getElementById('outrosList');
+        const inputValue = document.querySelector('input[name="outros"]').value;
+        if (inputValue) {
+            const newItem = document.createElement('div');
+            newItem.textContent = inputValue;
+            newItem.className = "item";
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Excluir';
+            deleteBtn.className = "delete-btn";
+            deleteBtn.onclick = function() {
+                outrosList.removeChild(newItem);
+            };
+
+            newItem.appendChild(deleteBtn);
+            outrosList.appendChild(newItem);
+            document.querySelector('input[name="outros"]').value = '';
+        }
+    };
+
+    document.getElementById('addHemoculturaBtn').onclick = function() {
+        const hemoculturaList = document.getElementById('hemoculturaList');
+        const infoValue = document.querySelector('input[name="hemocultura"]').value;
+        const dateValue = document.querySelector('input[name="hemoculturaData"]').value;
+        if (infoValue && dateValue) {
+            const newItem = document.createElement('div');
+            newItem.textContent = `${infoValue} - ${dateValue}`;
+            newItem.className = "hemocultura-item";
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Excluir';
+            deleteBtn.className = "delete-btn";
+            deleteBtn.onclick = function() {
+                hemoculturaList.removeChild(newItem);
+            };
+
+            newItem.appendChild(deleteBtn);
+            hemoculturaList.appendChild(newItem);
+            document.querySelector('input[name="hemocultura"]').value = '';
+            document.querySelector('input[name="hemoculturaData"]').value = '';
+        }
+    };
+
+    function toggleVisibility(id) {
+        const element = document.getElementById(id);
+        if (element.style.display === "none" || element.style.display === "") {
+            element.style.display = "block";
+        } else {
+            element.style.display = "none";
+        }
+    }
+</script>
+
+<style>
+    .hidden {
+        display: none;
+    }
+    .item, .hemocultura-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 5px 0;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    .delete-btn {
+        margin-left: 10px;
+        background-color: red;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .delete-btn:hover {
+        opacity: 0.8;
+    }
+</style>
+
+                </script>
+                <label for="diet">Dieta:</label>
+                <select id="diet" name="diet">
+                    <option value="Geral">Geral</option>
+                    <option value="Pastosa">Pastosa</option>
+                    <option value="Líquida">Líquida</option>
+                    <option value="Fono">Fono</option>
+                    <option value="SMLD">SMLD</option>
+                    <option value="jejum">Jejum</option>
+                </select><br>
+
+                <label for="sorotherapy-flow">Soroterapia - Vazão (ml/h):</label>
+                <input type="number" id="sorotherapy-flow" name="sorotherapy-flow"><br>
+
+                <label for="enteral">Enteral:</label>
+                <select id="enteral" name="enteral">
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                </select><br>
+
+                <div id="enteral-details" style="display:none;">
+                    <label for="enteral-type">Tipo:</label>
+                    <input type="text" id="enteral-type" name="enteral-type" placeholder="Ex.: pregomin, fresubin"><br>
+                    <label for="enteral-flow">Vazão:</label>
+                    <input type="number" id="enteral-flow" name="enteral-flow"><br>
+                    <label for="enteral-water">Água (ml em intervalo de tempo):</label>
+                    <input type="number" id="enteral-water" name="enteral-water"><br>
+                </div>
+
+                <label for="parenteral">Parenteral:</label>
+                <select id="parenteral" name="parenteral">
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                </select><br>
+
+                <div id="parenteral-details" style="display:none;">
+                    <label for="parenteral-type">Tipo:</label>
+                    <select id="parenteral-type" name="parenteral-type">
+                        <option value="Pronta">Pronta</option>
+                        <option value="Manipulada">Manipulada</option>
+                    </select><br>
+                    <label for="parenteral-flow">Vazão (ml/h):</label>
+                    <input type="number" id="parenteral-flow" name="parenteral-flow"><br>
+                    <label for="parenteral-duration">Tempo de Duração:</label>
+                    <input type="text" id="parenteral-duration" name="parenteral-duration"><br>
+                </div>
+
+<label for="oxygen-therapy">Oxigenoterapia:</label>
+<select id="oxygen-therapy" name="oxygen-therapy">
+    <option value="">Selecione uma opção</option>
+    <option value="CNO2">CNO2</option>
+    <option value="MNR">MNR</option>
+    <option value="VENTURI">Venturi</option>
+    <option value="CAF">CAF</option>
+    <option value="VM">VM</option>
+    <option value="NO">NO</option>
+</select>
+
+<div id="parameters" style="display: none;">
+    <div id="CNO2" class="parameter">
+        <input type="number" id="cno2-value" placeholder="Número" required />
+        <span>l/min</span>
+    </div>
+    <div id="MNR" class="parameter" style="display: none;">
+        <input type="number" id="mnr-value" placeholder="Número" required />
+        <span>l/min</span>
+    </div>
+    <div id="VENTURI" class="parameter" style="display: none;">
+        <input type="number" id="venturi-value" placeholder="Número" required />
+        <span>%</span>
+        <input type="number" id="venturi-flow" placeholder="Número" required />
+        <span>l/min</span>
+    </div>
+    <div id="CAF" class="parameter" style="display: none;">
+        <input type="number" id="caf-value" placeholder="Número" required />
+        <span>%</span>
+        <input type="number" id="caf-flow" placeholder="Número" required />
+        <span>l/min</span>
+    </div>
+    <div id="VM" class="parameter" style="display: none;">
+        <input type="number" id="vm-peep" placeholder="PEEP" required />
+        <span>cmH2O</span>
+        <input type="number" id="vm-fio2" placeholder="FIO2" required />
+        <span>%</span>
+    </div>
+    <div id="NO" class="parameter" style="display: none;">
+        <input type="number" id="no-value" placeholder="Número" required />
+        <span>PPM</span>
+        <input type="number" id="no-flow" placeholder="Número" required />
+        <span>l/min</span>
+    </div>
+</div>
+
+<button id="saveButton" style="display: none;">Salvar</button>
+<div id="savedInfo" style="margin-top: 20px;"></div>
+
+<script>
+    const oxygenSelect = document.getElementById('oxygen-therapy');
+    const parametersDiv = document.getElementById('parameters');
+    const parameterDivs = document.querySelectorAll('.parameter');
+    const saveButton = document.getElementById('saveButton');
+    const savedInfo = document.getElementById('savedInfo');
+
+    let selectedType = '';
+
+    oxygenSelect.addEventListener('change', function() {
+        parameterDivs.forEach(div => {
+            div.style.display = 'none';
+        });
+
+        selectedType = this.value;
+        if (selectedType) {
+            parametersDiv.style.display = 'block';
+            document.getElementById(selectedType).style.display = 'block';
+            saveButton.style.display = 'block';
+        } else {
+            parametersDiv.style.display = 'none';
+            saveButton.style.display = 'none';
+        }
+    });
+
+    saveButton.addEventListener('click', function() {
+        let infoText = '';
+
+        if (selectedType) {
+            let isValid = true;
+
+            const value = selectedType === 'CNO2' ? document.getElementById('cno2-value') :
+                          selectedType === 'MNR' ? document.getElementById('mnr-value') :
+                          selectedType === 'VENTURI' ? [document.getElementById('venturi-value'), document.getElementById('venturi-flow')] :
+                          selectedType === 'CAF' ? [document.getElementById('caf-value'), document.getElementById('caf-flow')] :
+                          selectedType === 'VM' ? [document.getElementById('vm-peep'), document.getElementById('vm-fio2')] :
+                          selectedType === 'NO' ? [document.getElementById('no-value'), document.getElementById('no-flow')] : null;
+
+            if (Array.isArray(value)) {
+                isValid = value.every(input => input.value.trim() !== '');
+                if (isValid) {
+                    infoText = `${selectedType}: ${value[0].value} ${selectedType === 'NO' ? 'PPM' : (selectedType === 'VENTURI' || selectedType === 'CAF' ? '%' : 'l/min')} ; ${value[1].value} ${selectedType === 'NO' ? 'l/min' : 'l/min'}`;
+                }
+            } else if (value && value.value.trim() !== '') {
+                if (selectedType === 'VM') {
+                    const peepValue = document.getElementById('vm-peep').value;
+                    const fio2Value = document.getElementById('vm-fio2').value;
+                    infoText = `PEEP: ${peepValue} cmH2O     ; FIO2: ${fio2Value} %`;
+                } else {
+                    infoText = `${selectedType}: ${value.value} ${selectedType === 'VENTURI' || selectedType === 'CAF' ? '%' : (selectedType === 'NO' ? 'PPM' : 'l/min')}`;
+                }
+            }
+
+            if (isValid) {
+                const paragraph = document.createElement('p');
+                paragraph.textContent = infoText;
+
+                // Adicionar botão para excluir
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Excluir';
+                deleteButton.onclick = function() {
+                    savedInfo.removeChild(paragraph);
+                };
+
+                paragraph.appendChild(deleteButton);
+                savedInfo.appendChild(paragraph);
+
+                // Limpar campos
+                parametersDiv.style.display = 'none';
+                saveButton.style.display = 'none';
+                oxygenSelect.value = '';
+                selectedType = '';
+                parameterDivs.forEach(div => {
+                    div.style.display = 'none';
+                    if (div.querySelector('input')) {
+                        div.querySelector('input').value = ''; // Limpar os campos de entrada
+                    }
+                });
+            } else {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+            }
+        }
+    });
+</script>
+
+
+                <label for="braden-scale">Escala BRADEN:</label>
+                <select id="braden-scale" name="braden-scale">
+                    <option value="sem risco">Sem Risco</option>
+                    <option value="leve">Leve</option>
+                    <option value="moderado">Moderado</option>
+                    <option value="alto">Alto</option>
+                                        <option value="muito alto">Muito Alto</option>
+                </select><br>
+
+                <label for="rass">Escala RASS:</label>
+                <select id="rass" name="rass">
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                </select><br>
+
+                <label for="rass-value">Se Sim, valor de -5 a +4:</label>
+                <input type="number" id="rass-value" name="rass-value" min="-5" max="+4"><br>
+
+                <label for="mechanical-restraint">Contenção Mecânica:</label>
+                <select id="mechanical-restraint" name="mechanical-restraint">
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                </select><br>
+
+                <label for="antibiotic-therapy">Antibioticoterapia:</label>
+                <textarea id="antibiotic-therapy" name="antibiotic-therapy" placeholder="Ex.: meropenem, tazocin, etc."></textarea><br>
+                
+                <label for="antibiotic-start-date">Data de Início:</label>
+                <input type="date" id="antibiotic-start-date" name="antibiotic-start-date"><br>
+
+                <label for="chemotherapy">Quimioterapia:</label>
+                <select id="chemotherapy" name="chemotherapy">
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                </select><br>
+
+                <div id="chemotherapy-details" style="display:none;">
+                    <label for="chemotherapy-type">Tipo:</label>
+                    <select id="chemotherapy-type" name="chemotherapy-type">
+                        <option value="doxorrubicina">Doxorrubicina</option>
+                        <option value="metotrexato">Metotrexato</option>
+                        <option value="vincristina">Vincristina</option>
+                    </select><br>
+                </div>
+
+                <label for="immunotherapy">Imunoterapia:</label>
+                <select id="immunotherapy" name="immunotherapy">
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                </select><br>
+
+                <div id="immunotherapy-details" style="display:none;">
+                    <label for="immunotherapy-type">Tipo:</label>
+                    <input type="text" id="immunotherapy-type" name="immunotherapy-type" placeholder="Ex.: blinatumomabe"><br>
+                    <label for="immunotherapy-start-date">Data de Instalação:</label>
+                    <input type="datetime-local" id="immunotherapy-start-date" name="immunotherapy-start-date"><br>
+                    <label for="immunotherapy-flow">Vazão:</label>
+                    <input type="number" id="immunotherapy-flow" name="immunotherapy-flow"><br>
+                </div>
+
+<h1>Cadastro de Acesso Vascular</h1>
+
+<label for="tipoAcesso">Tipo de Acesso Vascular:</label>
+<select id="tipoAcesso" onchange="mostrarCampos()">
+    <option value="">Selecione</option>
+    <option value="AVP">AVP</option>
+    <option value="CVC">CVC</option>
+    <option value="PAC">PAC</option>
+    <option value="PICC">PICC</option>
+    <option value="Mahurkar">Mahurkar</option>
+</select>
+
+<div id="camposAVP" class="hidden">
+    <h3>AVP</h3>
+    <label for="dataAVP">Data:</label>
+    <input type="date" id="dataAVP">
+    <br>
+    <label for="jelco">Jelco Nº:</label>
+    <input type="text" id="jelco">
+    <br>
+    <label for="membroAVP">Membro:</label>
+    <input type="text" id="membroAVP">
+</div>
+
+<div id="camposCVC" class="hidden">
+    <h3>CVC</h3>
+    <label for="dataCVC">Data de Inserção:</label>
+    <input type="date" id="dataCVC">
+    <br>
+    <label for="localCVC">Local de Punção:</label>
+    <select id="localCVC">
+        <option value="VJE">VJE</option>
+        <option value="VJD">VJD</option>
+        <option value="VSCE">VSCE</option>
+        <option value="VSCD">VSCD</option>
+        <option value="VFD">VFD</option>
+        <option value="VFE">VFE</option>
+    </select>
+    <br>
+    <label for="tipoCurativoCVC">Tipo de Curativo:</label>
+    <select id="tipoCurativoCVC">
+        <option value="convencional">Convencional</option>
+        <option value="pelicula">Película</option>
+    </select>
+    <input type="date" id="dataCurativoCVC">
+    <br>
+    <label for="dataClavesCVC">Data + Claves:</label>
+    <input type="date" id="dataClavesCVC">
+</div>
+
+<div id="camposPAC" class="hidden">
+    <h3>PAC</h3>
+    <label for="dataPAC">Data de Inserção:</label>
+    <input type="date" id="dataPAC">
+    <br>
+    <label for="localPAC">Local de Punção:</label>
+    <select id="localPAC">
+        <option value="HTD">HTD</option>
+        <option value="HTE">HTE</option>
+        <option value="FE">FE</option>
+        <option value="FD">FD</option>
+    </select>
+    <br>
+    <label for="tipoCurativoPAC">Tipo de Curativo:</label>
+    <select id="tipoCurativoPAC">
+        <option value="convencional">Convencional</option>
+        <option value="pelicula">Película</option>
+    </select>
+    <input type="date" id="dataCurativoPAC">
+    <br>
+    <label for="dataClavesPAC">Data + Claves:</label>
+    <input type="date" id="dataClavesPAC">
+</div>
+
+<div id="camposPICC" class="hidden">
+    <h3>PICC</h3>
+    <label for="dataPICC">Data de Inserção:</label>
+    <input type="date" id="dataPICC">
+    <br>
+    <label for="localPICC">Local de Punção:</label>
+    <select id="localPICC">
+        <option value="Cefálica">Cefálica</option>
+        <option value="Basílica">Basílica</option>
+    </select>
+    <br>
+    <label for="tipoCurativoPICC">Tipo de Curativo:</label>
+    <select id="tipoCurativoPICC">
+        <option value="convencional">Convencional</option>
+        <option value="pelicula">Película</option>
+    </select>
+    <input type="date" id="dataCurativoPICC">
+    <br>
+    <label for="dataClavesPICC">Data + Claves:</label>
+    <input type="date" id="dataClavesPICC">
+</div>
+
+<div id="camposMahurkar" class="hidden">
+    <h3>Mahurkar</h3>
+    <label for="dataMahurkar">Data de Inserção:</label>
+    <input type="date" id="dataMahurkar">
+    <br>
+    <label for="localMahurkar">Local de Punção:</label>
+    <select id="localMahurkar">
+        <option value="VJE">VJE</option>
+        <option value="VJD">VJD</option>
+        <option value="VSCE">VSCE</option>
+        <option value="VSCD">VSCD</option>
+        <option value="VFD">VFD</option>
+        <option value="VFE">VFE</option>
+    </select>
+    <br>
+    <label for="tipoCurativoMahurkar">Tipo de Curativo:</label>
+    <select id="tipoCurativoMahurkar">
+        <option value="convencional">Convencional</option>
+        <option value="pelicula">Película</option>
+    </select>
+    <input type="date" id="dataCurativoMahurkar">
+    <br>
+    <label for="dataClavesMahurkar">Data + Claves:</label>
+    <input type="date" id="dataClavesMahurkar">
+</div>
+
+<!-- Botão para adicionar dispositivo -->
+<button onclick="adicionarDispositivo()">Adicionar Dispositivo</button>
+
+<!-- Lista para mostrar dispositivos adicionados -->
+<h2>Dispositivos Adicionados</h2>
+<ul id="listaDispositivos"></ul>
+
+<script>
+// Função para exibir campos com base no tipo de acesso vascular selecionado
+function mostrarCampos() {
+    const tipoAcesso = document.getElementById("tipoAcesso").value;
+    const campos = document.querySelectorAll("div[id^='campos']");
+
+    campos.forEach(campo => {
+        campo.classList.add("hidden");
+    });
+
+    if (tipoAcesso) {
+        document.getElementById(`campos${tipoAcesso}`).classList.remove("hidden");
+    }
+}
+
+// Função para adicionar um dispositivo à lista e exibir seus dados
+function adicionarDispositivo() {
+    const tipoAcesso = document.getElementById("tipoAcesso").value;
+
+    if (!tipoAcesso) {
+        alert("Selecione um tipo de acesso vascular.");
+        return;
+    }
+
+    let detalhes = "";
+
+    switch (tipoAcesso) {
+        case "AVP":
+            const membroAVP = document.getElementById("membroAVP").value;
+            const jelco = document.getElementById("jelco").value;
+            const dataAVP = document.getElementById("dataAVP").value;
+            detalhes = `${tipoAcesso}; ${membroAVP}; J ${jelco}; ${dataAVP}`;
+            break;
+        case "CVC":
+            const localCVC = document.getElementById("localCVC").value;
+            const dataCVC = document.getElementById("dataCVC").value;
+            const dataCurativoCVC = document.getElementById("dataCurativoCVC").value;
+            const dataClavesCVC = document.getElementById("dataClavesCVC").value;
+            detalhes = `${tipoAcesso}; ${localCVC}; Inserção ${dataCVC}; Curativo ${dataCurativoCVC}; Claves ${dataClavesCVC}`;
+            break;
+        case "PAC":
+            const localPAC = document.getElementById("localPAC").value;
+            const dataPAC = document.getElementById("dataPAC").value;
+            const dataCurativoPAC = document.getElementById("dataCurativoPAC").value;
+            const dataClavesPAC = document.getElementById("dataClavesPAC").value;
+            detalhes = `${tipoAcesso}; ${localPAC}; Inserção ${dataPAC}; Curativo ${dataCurativoPAC}; Claves ${dataClavesPAC}`;
+            break;
+        case "PICC":
+            const localPICC = document.getElementById("localPICC").value;
+            const dataPICC = document.getElementById("dataPICC").value;
+            const dataCurativoPICC = document.getElementById("dataCurativoPICC").value;
+            const dataClavesPICC = document.getElementById("dataClavesPICC").value;
+            detalhes = `${tipoAcesso}; ${localPICC}; Inserção ${dataPICC}; Curativo ${dataCurativoPICC}; Claves ${dataClavesPICC}`;
+            break;
+        case "Mahurkar":
+            const localMahurkar = document.getElementById("localMahurkar").value;
+            const dataMahurkar = document.getElementById("dataMahurkar").value;
+            const dataCurativoMahurkar = document.getElementById("dataCurativoMahurkar").value;
+            const dataClavesMahurkar = document.getElementById("dataClavesMahurkar").value;
+            detalhes = `${tipoAcesso}; ${localMahurkar}; Inserção ${dataMahurkar}; Curativo ${dataCurativoMahurkar}; Claves ${dataClavesMahurkar}`;
+            break;
+    }
+
+    const lista = document.getElementById("listaDispositivos");
+    const novoItem = document.createElement("li");
+    novoItem.textContent = detalhes;
+
+    // Botão "X" para remover o dispositivo
+    const botaoRemover = document.createElement("span");
+    botaoRemover.textContent = " X";
+    botaoRemover.style.color = "red";
+    botaoRemover.style.cursor = "pointer";
+    botaoRemover.onclick = function() {
+        lista.removeChild(novoItem);
+    };
+
+    novoItem.appendChild(botaoRemover);
+    lista.appendChild(novoItem);
+}
+</script>
+
+                <label for="continuous-infusion-drugs">Drogas de Infusão Contínua:</label>
+                <select id="continuous-infusion-drugs" name="continuous-infusion-drugs">
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                </select><br>
+
+                <div id="continuous-infusion-details" style="display:none;">
+                    <label for="dv-drugs">DVAs:</label>
+                    <input type="text" id="dv-drugs" name="dv-drugs" placeholder="Ex.: noradrenalina, primacor, etc."><br>
+                    <label for="sedation-drugs">Sedação:</label>
+                    <input type="text" id="sedation-drugs" name="sedation-drugs" placeholder="Ex.: fentanil, midazolam, etc."><br>
+                    <label for="other-drugs">Outros:</label>
+                    <input type="text" id="other-drugs" name="other-drugs"><br>
+                    <label for="infusion-flow">Vazão (ml/h):</label>
+                    <input type="number" id="infusion-flow" name="infusion-flow"><br>
+                </div>
+
+                <label for="drain">Dreno:</label>
+                <select id="drain" name="drain">
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                </select><br>
+
+                <div id="drain-details" style="display:none;">
+                    <label for="drain-type">Tipo:</label>
+                    <select id="drain-type" name="drain-type">
+                        <option value="tórax">Tórax</option>
+                        <option value="blake">Blake</option>
+                        <option value="portovac">Portovac</option>
+                    </select><br>
+                    <label for="drain-aspect">Aspecto e Volume (manhã, tarde, noite):</label>
+                    <input type="text" id="drain-aspect" name="drain-aspect" placeholder="Descreva o aspecto e volume"></input><br>
+                </div>
+
+                <label for="svd">SVD:</label>
+                <input type="text" id="svd" name="svd" placeholder="Descreva SVD se houver"><br>
+
+                <label for="stoma">Estoma:</label>
+                <select id="stoma" name="stoma">
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                </select><br>
+
+                <div id="stoma-details" style="display:none;">
+                    <label for="stoma-type">Tipo:</label>
+                    <select id="stoma-type" name="stoma-type">
+                        <option value="colostomia">Colostomia</option>
+                        <option value="ileostomia">Ileostomia</option>
+                    </select><br>
+                    <label for="stoma-aspect">Aspecto e Volume (manhã, tarde, noite):</label>
+                    <input type="text" id="stoma-aspect" name="stoma-aspect" placeholder="Descreva o aspecto e volume"></input><br>
+                </div>
+
+<h1>Cadastro de Lesão de Pele</h1>
+
+<!-- Campo de texto ajustável automaticamente para Local e Descrição de Lesão de Pele -->
+<label for="skin-injury">Lesão de Pele:</label>
+<textarea id="skin-injury" name="skin-injury" placeholder="Local e descrição" oninput="autoAdjust(this)" onkeypress="expandOnEnter(event, this)"></textarea>
+<br>
+
+<!-- Campo de texto ajustável automaticamente para Conduta -->
+<label for="conduct">Conduta:</label>
+<textarea id="conduct" name="conduct" placeholder="Descreva a conduta realizada" oninput="autoAdjust(this)" onkeypress="expandOnEnter(event, this)"></textarea>
+<br>
+
+<!-- Botão para anexar imagens -->
+<button onclick="anexarImagem()">Anexar Imagens</button>
+<input type="file" id="imagemInput" style="display: none;" accept="image/*" multiple onchange="mostrarPreview(event)">
+<br>
+
+<!-- Div para mostrar a lista de imagens anexadas -->
+<div id="imagemPreviewContainer" style="margin-top: 10px;"></div>
+
+<!-- Modal para exibir a imagem em tamanho original -->
+<div id="imagemModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center;">
+    <img id="imagemOriginal" style="max-width: 80%; max-height: 80%;">
+    <span onclick="fecharModal()" style="position: absolute; top: 10px; right: 10px; color: white; font-size: 30px; cursor: pointer;">&times;</span>
+</div>
+
+<script>
+// Função para ajustar o tamanho da textarea de acordo com o texto inserido
+function autoAdjust(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = (textarea.scrollHeight) + 'px';
+}
+
+// Função para expandir a área de texto ao pressionar "Enter" e realizar a quebra de linha
+function expandOnEnter(event, textarea) {
+    if (event.key === 'Enter') {
+        textarea.style.height = (textarea.scrollHeight + 20) + 'px';
+    }
+}
+
+// Função para anexar imagens ao clicar no botão
+function anexarImagem() {
+    document.getElementById('imagemInput').click();
+}
+
+// Função para mostrar a pré-visualização das imagens anexadas
+function mostrarPreview(event) {
+    const imagemPreviewContainer = document.getElementById('imagemPreviewContainer');
+
+    for (let i = 0; i < event.target.files.length; i++) {
+        const file = event.target.files[i];
+        const reader = new FileReader();
+
+        const imagemDiv = document.createElement('div');
+        imagemDiv.style.position = 'relative';
+        imagemDiv.style.display = 'inline-block';
+        imagemDiv.style.marginRight = '10px';
+        imagemDiv.style.marginBottom = '10px';
+
+        const imagem = document.createElement('img');
+        imagem.style.border = '1px solid #ddd';
+        imagem.style.padding = '5px';
+        imagem.style.maxWidth = '150px';
+        imagem.style.height = 'auto';
+        imagem.style.cursor = 'pointer';
+
+        // Evento para exibir a imagem original ao clicar na miniatura
+        imagem.onclick = function () {
+            document.getElementById('imagemModal').style.display = 'flex';
+            document.getElementById('imagemOriginal').src = imagem.src;
+        };
+
+        // Cria o botão "X" para excluir a imagem
+        const botaoRemover = document.createElement('span');
+        botaoRemover.textContent = 'X';
+        botaoRemover.style.position = 'absolute';
+        botaoRemover.style.top = '5px';
+        botaoRemover.style.right = '5px';
+        botaoRemover.style.color = 'red';
+        botaoRemover.style.cursor = 'pointer';
+        botaoRemover.onclick = function () {
+            imagemPreviewContainer.removeChild(imagemDiv);
+        };
+
+        // Cria o botão "-" para minimizar a imagem
+        const botaoMinimizar = document.createElement('span');
+        botaoMinimizar.textContent = '-';
+        botaoMinimizar.style.position = 'absolute';
+        botaoMinimizar.style.top = '5px';
+        botaoMinimizar.style.left = '5px';
+        botaoMinimizar.style.color = 'blue';
+        botaoMinimizar.style.cursor = 'pointer';
+        botaoMinimizar.onclick = function () {
+            imagem.style.display = imagem.style.display === 'none' ? 'block' : 'none';
+            botaoMinimizar.textContent = imagem.style.display === 'none' ? '+' : '-';
+        };
+
+        reader.onload = function (e) {
+            imagem.src = e.target.result;
+            imagemDiv.appendChild(imagem);
+            imagemDiv.appendChild(botaoRemover);
+            imagemDiv.appendChild(botaoMinimizar);
+            imagemPreviewContainer.appendChild(imagemDiv);
+        };
+
+        reader.readAsDataURL(file);
+    }
+}
+
+// Função para fechar o modal de exibição da imagem original
+function fecharModal() {
+    document.getElementById('imagemModal').style.display = 'none';
+}
+</script>
+
+<style>
+/* Estilo para ajustar visualmente os campos de texto */
+input[type="text"], textarea {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
+
+/* Ajustando a área de conduta para ser esteticamente semelhante */
+textarea {
+    resize: none; /* Desativa o redimensionamento manual */
+    overflow-y: hidden; /* Remove a barra de rolagem vertical */
+    min-height: 100px;
+    height: auto;
+    line-height: 1.5em;
+}
+
+button {
+    margin-top: 10px;
+    padding: 5px 10px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+#imagemPreviewContainer div {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+#imagemPreviewContainer img {
+    border: 1px solid #ddd;
+    padding: 5px;
+    max-width: 150px;
+    height: auto;
+}
+
+#imagemModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    justify-content: center;
+    align-items: center;
+}
+
+#imagemModal img {
+    max-width: 80%;
+    max-height: 80%;
+}
+
+</style>
+
+
+                <label for="care-performed">Cuidados Realizados no Período:</label>
+                <textarea id="care-performed" name="care-performed" placeholder="Descreva os cuidados realizados"></textarea><br>
+
+                <label for="pending-care">Cuidados Pendentes:</label>
+                <textarea id="pending-care" name="pending-care" placeholder="Descreva os cuidados pendentes"></textarea><br>
+
+                <label for="observations">Observações:</label>
+                <textarea id="observations" name="observations" placeholder="Insira observações adicionais"></textarea><br>
+
+                <label for="adverse-event">Evento Adverso:</label>
+                <select id="adverse-event" name="adverse-event">
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                </select><br>
+
+                <div id="adverse-event-details" style="display:none;">
+                    <label for="adverse-event-description">Descrição do Evento:</label>
+                    <textarea id="adverse-event-description" name="adverse-event-description" placeholder="Descreva o evento adverso"></textarea><br>
+                    <label for="notification">Notificação:</label>
+                    <input type="text" id="notification" name="notification" placeholder="Descreva a notificação"></input><br>
+                </div>
+
+                <button type="button" onclick="saveBedInfo()">Salvar</button>
+                <button type="button" onclick="showBeds()">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+
+    <style>
+        /* Estilo para os botões de salvar e carregar */
+        #saveButton, #loadButton {
+            background-color: #4CAF50; /* Verde */
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        #saveButton:hover, #loadButton:hover {
+            background-color: #45a049; /* Verde mais escuro */
+        }
+    </style>
+</head>
+<body>
+ 
+
+
+
+        <!-- Botão para salvar os dados em arquivo JSON -->
+        <button type="button" onclick="saveData()">Salvar Dados</button>
+        <button type="button" onclick="hideEditForm()">Cancelar</button>
+    </form>
+
+    <!-- Campo para carregar um arquivo JSON -->
+    <input type="file" id="jsonFileInput" onchange="loadData(event)" style="margin-top: 20px;">
+    <label for="jsonFileInput">Carregar Dados de Leito</label>
+
+    <script>
+        // Variável para armazenar dados temporários
+        let tempData = {};
+
+        // Função para capturar os dados do formulário de edição de leito
+        function captureTempData(bedId) {
+            const diagnosis = document.getElementById("diagnosis").value;
+            const admissionReason = document.getElementById("admission-reason").value;
+            const admissionDate = document.getElementById("admission-date").value;
+            const daysInHospital = document.getElementById("days-in-hospital").value;
+
+            // Armazena as informações do leito na variável tempData
+            tempData[bedId] = {
+                diagnosis: diagnosis,
+                admissionReason: admissionReason,
+                admissionDate: admissionDate,
+                daysInHospital: daysInHospital
+            };
+        }
+
+        // Função para salvar os dados em um arquivo JSON
+        function saveData() {
+            const bedId = document.getElementById('current-bed-id').value; // Captura o leito atual
+            if (bedId) {
+                captureTempData(bedId); // Captura os dados preenchidos no formulário
+
+                const jsonString = JSON.stringify(tempData, null, 2); // Converte o objeto para JSON
+                const blob = new Blob([jsonString], { type: "application/json" });
+                const link = document.createElement("a");
+
+                link.href = URL.createObjectURL(blob);
+                link.download = `dados_leito_${bedId}.json`; // Nome do arquivo JSON
+                link.click(); // Executa o download
+            } else {
+                alert("Selecione um leito antes de salvar.");
+            }
+        }
+
+        // Função para carregar o arquivo JSON e preencher os campos do formulário
+        function loadData(event) {
+            const file = event.target.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const content = e.target.result;
+                    try {
+                        const loadedData = JSON.parse(content);
+
+                        // Restaura os dados carregados no objeto tempData
+                        tempData = loadedData;
+
+                        // Atualiza o leito ativo com os dados carregados
+                        const bedId = document.getElementById('current-bed-id').value;
+                        if (bedId && tempData[bedId]) {
+                            document.getElementById("diagnosis").value = tempData[bedId].diagnosis || "";
+                            document.getElementById("admission-reason").value = tempData[bedId].admissionReason || "";
+                            document.getElementById("admission-date").value = tempData[bedId].admissionDate || "";
+                            document.getElementById("days-in-hospital").value = tempData[bedId].daysInHospital || "";
+                        } else {
+                            alert("Nenhum dado para o leito atual foi encontrado no arquivo.");
+                        }
+                    } catch (error) {
+                        alert("Erro ao carregar o arquivo. Verifique se o formato está correto.");
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // Função para exibir o formulário de edição de leito
+        function editBedForm(bedId) {
+            document.getElementById('current-bed-id').value = bedId; // Define o leito atual no formulário
+            document.getElementById('edit-form').style.display = 'block'; // Exibe o formulário de edição
+
+            // Preenche o formulário com os dados já salvos, se houver
+            if (tempData[bedId]) {
+                document.getElementById("diagnosis").value = tempData[bedId].diagnosis || "";
+                document.getElementById("admission-reason").value = tempData[bedId].admissionReason || "";
+                document.getElementById("admission-date").value = tempData[bedId].admissionDate || "";
+                document.getElementById("days-in-hospital").value = tempData[bedId].daysInHospital || "";
+            } else {
+                // Limpa o formulário se não houver dados
+                document.getElementById("diagnosis").value = "";
+                document.getElementById("admission-reason").value = "";
+                document.getElementById("admission-date").value = "";
+                document.getElementById("days-in-hospital").value = "";
+            }
+        }
+
+        // Função para ocultar o formulário de edição
+        function hideEditForm() {
+            document.getElementById("edit-form").style.display = 'none';
+        }
+
+        // Adiciona o evento de clique para cada leito
+        document.querySelectorAll('.bed').forEach(bed => {
+            bed.addEventListener('click', function() {
+                const bedId = this.getAttribute('id');
+                editBedForm(bedId);
+            });
+        });
+    </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
+
+
+<!-- Inserir o botão de imprimir aqui -->
+<button onclick="imprimir()">Imprimir</button>
+
+<script>
+// Função para imprimir a página
+function imprimir() {
+    window.print();
+}
+</script>
+
+    <script>
+        function showIndicators() {
+            alert("Aqui você verá os Indicadores da Unidade!"); // Pode ser substituído por um redirecionamento ou modal
+        }
+
+        // Adicione funções para gerenciar a exibição de detalhes conforme necessário
+        document.getElementById('enteral').addEventListener('change', function () {
+            document.getElementById('enteral-details').style.display = this.value === 'Sim' ? 'block' : 'none';
+        });
+
+        document.getElementById('parenteral').addEventListener('change', function () {
+            document.getElementById('parenteral-details').style.display = this.value === 'Sim' ? 'block' : 'none';
+        });
+
+        document.getElementById('chemotherapy').addEventListener('change', function () {
+            document.getElementById('chemotherapy-details').style.display = this.value === 'Sim' ? 'block' : 'none';
+        });
+
+        document.getElementById('immunotherapy').addEventListener('change', function () {
+            document.getElementById('immunotherapy-details').style.display = this.value === 'Sim' ? 'block' : 'none';
+        });
+
+        document.getElementById('continuous-infusion-drugs').addEventListener('change', function () {
+            document.getElementById('continuous-infusion-details').style.display = this.value === 'Sim' ? 'block' : 'none';
+        });
+
+        document.getElementById('drain').addEventListener('change', function () {
+            document.getElementById('drain-details').style.display = this.value === 'Sim' ? 'block' : 'none';
+        });
+
+        document.getElementById('stoma').addEventListener('change', function () {
+            document.getElementById('stoma-details').style.display = this.value === 'Sim' ? 'block' : 'none';
+        });
+
+        document.getElementById('adverse-event').addEventListener('change', function () {
+            document.getElementById('adverse-event-details').style.display = this.value === 'Sim' ? 'block' : 'none';
+        });
+
+        function calculateAge() {
+            const dob = new Date(document.getElement
